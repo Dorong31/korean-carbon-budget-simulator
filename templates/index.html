@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한국 탄소중립 경로 시뮬레이터</title>
+    
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2E86AB;
+            --secondary-color: #A23B72;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #F8F9FA;
+            --dark-text: #2C3E50;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark-text);
+        }
+        
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 1400px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .version-badge {
+            margin-top: 15px;
+        }
+        
+        .version-badge .badge {
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .control-panel {
+            background: var(--light-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            font-weight: 500;
+            color: var(--dark-text);
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .slider-container {
+            position: relative;
+            margin: 10px 0;
+        }
+        
+        .slider-value {
+            position: absolute;
+            right: 0;
+            top: -5px;
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .form-range {
+            height: 8px;
+            border-radius: 5px;
+            background: #e9ecef;
+        }
+        
+        .form-range::-webkit-slider-thumb {
+            background: var(--primary-color);
+            border: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .form-range::-moz-range-thumb {
+            background: var(--primary-color);
+            border: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 500;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            background: #1a5a7a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 134, 171, 0.3);
+        }
+        
+        .btn-success-custom {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success-custom:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-warning-custom {
+            background: var(--warning-color);
+            color: #212529;
+        }
+        
+        .btn-warning-custom:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+        }
+        
+        .btn-info-custom {
+            background: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-info-custom:hover {
+            background: #7a2b5a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(162, 59, 114, 0.3);
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card.total {
+            border-color: var(--primary-color);
+        }
+        
+        .stat-card.over {
+            border-color: var(--danger-color);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table th {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .table td {
+            border-color: #e9ecef;
+            vertical-align: middle;
+        }
+        
+        .highlight-row {
+            background-color: #fff3cd !important;
+            font-weight: 500;
+        }
+        
+        .scenario-list {
+            background: var(--light-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .scenario-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .scenario-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner-border {
+            color: var(--primary-color);
+        }
+        
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .modal-title {
+            font-weight: 600;
+        }
+        
+        .btn-close {
+            filter: invert(1);
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+        
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .scenario-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .scenario-info {
+            flex: 1;
+        }
+        
+        .scenario-date {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        /* Footer Styles */
+        .footer {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px 0;
+            margin-top: 40px;
+        }
+        
+        .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+        }
+        
+        .footer-logo {
+            flex-shrink: 0;
+        }
+        
+        .turntable-logo {
+            height: 50px;
+            width: auto;
+            border-radius: 8px;
+            background: white;
+            padding: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .footer-info {
+            text-align: center;
+        }
+        
+        .organization-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            opacity: 0.95;
+        }
+        
+        .copyright {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+                gap: 15px;
+                padding: 0 20px;
+            }
+            
+            .turntable-logo {
+                height: 40px;
+            }
+            
+            .organization-name {
+                font-size: 1.1rem;
+            }
+            
+            .copyright {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-leaf me-3"></i>{{ app_name }}</h1>
+            <p>2050년 탄소중립 목표 달성을 위한 배출량 감축 시나리오를 시뮬레이션해보세요</p>
+            <div class="version-badge">
+                <span class="badge bg-light text-dark">v{{ version }}</span>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h3 class="mb-4"><i class="fas fa-sliders-h me-2"></i>시나리오 설정</h3>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="control-group">
+                            <label for="budget">탄소예산 (억tCO₂)</label>
+                            <input type="number" id="budget" class="form-control" value="87.4" step="0.1" min="0">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="targetYear">탄소중립 목표연도</label>
+                            <div class="slider-container">
+                                <span class="slider-value" id="targetYearValue">2050</span>
+                                <input type="range" id="targetYear" class="form-range" min="2040" max="2050" value="2050">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="control-group">
+                            <label for="r35">2035년 감축률 (%)</label>
+                            <div class="slider-container">
+                                <span class="slider-value" id="r35Value">50%</span>
+                                <input type="range" id="r35" class="form-range" min="0" max="100" value="50">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="r40">2040년 감축률 (%)</label>
+                            <div class="slider-container">
+                                <span class="slider-value" id="r40Value">70%</span>
+                                <input type="range" id="r40" class="form-range" min="0" max="100" value="70">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="r45">2045년 감축률 (%)</label>
+                            <div class="slider-container">
+                                <span class="slider-value" id="r45Value">85%</span>
+                                <input type="range" id="r45" class="form-range" min="0" max="100" value="85">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary-custom btn-custom me-3" onclick="calculateScenario()">
+                        <i class="fas fa-calculator me-2"></i>시나리오 계산
+                    </button>
+                    <button class="btn btn-success-custom btn-custom me-3" onclick="showSaveModal()">
+                        <i class="fas fa-save me-2"></i>시나리오 저장
+                    </button>
+                    <button class="btn btn-info-custom btn-custom me-3" onclick="loadSavedScenarios()">
+                        <i class="fas fa-folder-open me-2"></i>저장된 시나리오
+                    </button>
+                    <button class="btn btn-warning-custom btn-custom" onclick="resetScenario()">
+                        <i class="fas fa-undo me-2"></i>초기화
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">시나리오를 계산하고 있습니다...</p>
+            </div>
+            
+            <!-- Alert Messages -->
+            <div id="alertContainer"></div>
+            
+            <!-- Stats Cards -->
+            <div class="stats-cards" id="statsCards" style="display: none;">
+                <div class="stat-card total">
+                    <div class="stat-value" id="totalEmission">0.0</div>
+                    <div class="stat-label">누적 배출량 (억tCO₂)</div>
+                </div>
+                <div class="stat-card over">
+                    <div class="stat-value" id="overEmission">0.0</div>
+                    <div class="stat-label">초과 배출량 (억tCO₂)</div>
+                </div>
+            </div>
+            
+            <!-- Chart -->
+            <div class="chart-container">
+                <h3 class="mb-4"><i class="fas fa-chart-line me-2"></i>배출량 추이</h3>
+                <div id="chart"></div>
+            </div>
+            
+            <!-- Data Table -->
+            <div class="table-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3><i class="fas fa-table me-2"></i>연도별 배출량 (억tCO₂)</h3>
+                    <button class="btn btn-outline-primary btn-sm" onclick="togglePre2030()">
+                        <i class="fas fa-eye me-1"></i>2030년 이전 값 보기
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>연도</th>
+                                <th>배출량 (억tCO₂)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Saved Scenarios -->
+            <div class="scenario-list" id="scenarioList" style="display: none;">
+                <h4><i class="fas fa-list me-2"></i>저장된 시나리오</h4>
+                <div id="scenarioItems"></div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="{{ url_for('static', filename='images/Turntable_logo.png') }}" alt="턴테이블 로고" class="turntable-logo">
+                </div>
+                <div class="footer-info">
+                    <p class="organization-name">기후커뮤니티 턴테이블</p>
+                    <p class="copyright">© 2025 Climate Community Turntable. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save Scenario Modal -->
+    <div class="modal fade" id="saveModal" tabindex="-1" aria-labelledby="saveModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="saveModalLabel">
+                        <i class="fas fa-save me-2"></i>시나리오 저장
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="scenarioName" class="form-label">시나리오 이름</label>
+                        <input type="text" class="form-control" id="scenarioName" placeholder="시나리오 이름을 입력하세요 (선택사항)">
+                        <div class="form-text">이름을 입력하지 않으면 자동으로 "시나리오 N"으로 저장됩니다.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="saveScenario()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Load Scenario Modal -->
+    <div class="modal fade" id="loadModal" tabindex="-1" aria-labelledby="loadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loadModalLabel">
+                        <i class="fas fa-folder-open me-2"></i>저장된 시나리오 불러오기
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="loadScenarioList">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">시나리오 목록을 불러오는 중...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let showPre2030 = false;
+        let savedScenarios = [];
+        let currentScenario = null;
+        let loadModal = null;
+        let saveModal = null;
+        
+        // DOM 요소들
+        const budgetInput = document.getElementById('budget');
+        const targetYearSlider = document.getElementById('targetYear');
+        const targetYearValue = document.getElementById('targetYearValue');
+        const r35Slider = document.getElementById('r35');
+        const r35Value = document.getElementById('r35Value');
+        const r40Slider = document.getElementById('r40');
+        const r40Value = document.getElementById('r40Value');
+        const r45Slider = document.getElementById('r45');
+        const r45Value = document.getElementById('r45Value');
+        const loading = document.getElementById('loading');
+        const statsCards = document.getElementById('statsCards');
+        const totalEmission = document.getElementById('totalEmission');
+        const overEmission = document.getElementById('overEmission');
+        const tableBody = document.getElementById('tableBody');
+        const alertContainer = document.getElementById('alertContainer');
+        const scenarioNameInput = document.getElementById('scenarioName');
+        
+        // 이벤트 리스너 등록
+        targetYearSlider.addEventListener('input', updateTargetYearValue);
+        r35Slider.addEventListener('input', updateR35Value);
+        r40Slider.addEventListener('input', updateR40Value);
+        r45Slider.addEventListener('input', updateR45Value);
+        
+        // 값 업데이트 함수들
+        function updateTargetYearValue() {
+            targetYearValue.textContent = targetYearSlider.value;
+        }
+        
+        function updateR35Value() {
+            r35Value.textContent = r35Slider.value + '%';
+        }
+        
+        function updateR40Value() {
+            r40Value.textContent = r40Slider.value + '%';
+        }
+        
+        function updateR45Value() {
+            r45Value.textContent = r45Slider.value + '%';
+        }
+        
+        // 시나리오 계산
+        async function calculateScenario() {
+            showLoading(true);
+            
+            const data = {
+                budget: parseFloat(budgetInput.value),
+                target_year: parseInt(targetYearSlider.value),
+                r35: parseFloat(r35Slider.value),
+                r40: parseFloat(r40Slider.value),
+                r45: parseFloat(r45Slider.value)
+            };
+            
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    currentScenario = result;
+                    displayResults(result);
+                    showAlert('시나리오가 성공적으로 계산되었습니다.', 'success');
+                } else {
+                    throw new Error('계산 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('시나리오 계산 중 오류가 발생했습니다.', 'danger');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // 결과 표시
+        function displayResults(result) {
+            // 통계 카드 업데이트
+            totalEmission.textContent = result.total_emission;
+            overEmission.textContent = result.over_emission;
+            statsCards.style.display = 'grid';
+            
+            // 차트 업데이트
+            const chartData = JSON.parse(result.chart);
+            Plotly.newPlot('chart', chartData.data, chartData.layout, {responsive: true});
+            
+            // 테이블 업데이트
+            updateTable(result.all_data);
+        }
+        
+        // 테이블 업데이트
+        function updateTable(data) {
+            const filteredData = showPre2030 ? data : data.filter(item => item.year >= 2030);
+            const highlightYears = [2030, 2035, 2040, 2045, 2050];
+            
+            tableBody.innerHTML = filteredData.map(item => {
+                const isHighlight = highlightYears.includes(item.year);
+                return `
+                    <tr class="${isHighlight ? 'highlight-row' : ''}">
+                        <td><strong>${item.year}</strong></td>
+                        <td>${item.value.toFixed(3)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // 저장 모달 표시
+        async function showSaveModal() {
+            if (!currentScenario) {
+                showAlert('먼저 시나리오를 계산해주세요.', 'warning');
+                return;
+            }
+            
+            if (!saveModal) {
+                saveModal = new bootstrap.Modal(document.getElementById('saveModal'));
+            }
+            
+            // 다음 시나리오 이름을 서버에서 가져오기
+            try {
+                const response = await fetch('/get_next_scenario_name');
+                const result = await response.json();
+                scenarioNameInput.value = result.next_name;
+            } catch (error) {
+                console.error('Error fetching next scenario name:', error);
+                scenarioNameInput.value = '시나리오 1';
+            }
+            
+            saveModal.show();
+        }
+        
+        // 시나리오 저장
+        async function saveScenario() {
+            if (!currentScenario) {
+                showAlert('먼저 시나리오를 계산해주세요.', 'warning');
+                return;
+            }
+            
+            const scenarioName = scenarioNameInput.value.trim();
+            
+            try {
+                const response = await fetch('/save_scenario', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        scenario: currentScenario.scenario,
+                        name: scenarioName,
+                        budget: parseFloat(budgetInput.value),
+                        target_year: parseInt(targetYearSlider.value),
+                        r35: parseFloat(r35Slider.value),
+                        r40: parseFloat(r40Slider.value),
+                        r45: parseFloat(r45Slider.value)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    savedScenarios.push({
+                        name: result.name,
+                        data: currentScenario.scenario,
+                        total: currentScenario.total_emission,
+                        over: currentScenario.over_emission
+                    });
+                    
+                    updateScenarioList();
+                    showAlert(`시나리오 "${result.name}"이(가) 성공적으로 저장되었습니다.`, 'success');
+                    
+                    if (saveModal) {
+                        saveModal.hide();
+                    }
+                } else {
+                    throw new Error(result.error || '저장 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('시나리오 저장 중 오류가 발생했습니다.', 'danger');
+            }
+        }
+        
+        // 저장된 시나리오 불러오기
+        async function loadSavedScenarios() {
+            if (!loadModal) {
+                loadModal = new bootstrap.Modal(document.getElementById('loadModal'));
+            }
+            
+            loadModal.show();
+            
+            try {
+                const response = await fetch('/load_scenarios');
+                const scenarios = await response.json();
+                
+                const loadScenarioList = document.getElementById('loadScenarioList');
+                
+                if (scenarios.length === 0) {
+                    loadScenarioList.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">저장된 시나리오가 없습니다.</p>
+                        </div>
+                    `;
+                } else {
+                    loadScenarioList.innerHTML = scenarios.map(scenario => {
+                        const date = new Date(scenario.created_at).toLocaleString('ko-KR');
+                        return `
+                            <div class="scenario-item">
+                                <div class="scenario-actions">
+                                    <div class="scenario-info">
+                                        <h6 class="mb-1">${scenario.name}</h6>
+                                        <div class="scenario-date">생성일: ${date}</div>
+                                    </div>
+                                    <button class="btn btn-sm btn-primary" onclick="loadScenario('${scenario.filename}')">
+                                        <i class="fas fa-download me-1"></i>불러오기
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteScenario('${scenario.filename}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loadScenarioList').innerHTML = `
+                    <div class="alert alert-danger">
+                        시나리오 목록을 불러오는 중 오류가 발생했습니다.
+                    </div>
+                `;
+            }
+        }
+        
+        // 특정 시나리오 불러오기
+        async function loadScenario(filename) {
+            try {
+                const response = await fetch(`/load_scenario/${filename}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    
+                    // 설정값 복원
+                    budgetInput.value = data.settings.budget;
+                    targetYearSlider.value = data.settings.target_year;
+                    r35Slider.value = data.settings.r35;
+                    r40Slider.value = data.settings.r40;
+                    r45Slider.value = data.settings.r45;
+                    
+                    // 값 표시 업데이트
+                    updateTargetYearValue();
+                    updateR35Value();
+                    updateR40Value();
+                    updateR45Value();
+                    
+                    // 시나리오 계산 및 표시
+                    await calculateScenario();
+                    
+                    showAlert(`시나리오 "${data.name}"을(를) 성공적으로 불러왔습니다.`, 'success');
+                    
+                    if (loadModal) {
+                        loadModal.hide();
+                    }
+                } else {
+                    throw new Error(result.error || '시나리오를 불러오는 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('시나리오를 불러오는 중 오류가 발생했습니다.', 'danger');
+            }
+        }
+        
+        // 시나리오 삭제
+        async function deleteScenario(filename) {
+            if (!confirm('정말로 이 시나리오를 삭제하시겠습니까?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/delete_scenario/${filename}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('시나리오가 삭제되었습니다.', 'success');
+                    loadSavedScenarios(); // 목록 새로고침
+                } else {
+                    throw new Error(result.error || '삭제 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('시나리오 삭제 중 오류가 발생했습니다.', 'danger');
+            }
+        }
+        
+        // 시나리오 목록 업데이트
+        function updateScenarioList() {
+            const scenarioList = document.getElementById('scenarioList');
+            const scenarioItems = document.getElementById('scenarioItems');
+            
+            if (savedScenarios.length > 0) {
+                scenarioList.style.display = 'block';
+                scenarioItems.innerHTML = savedScenarios.map((scenario, index) => `
+                    <div class="scenario-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${scenario.name}</h6>
+                                <small class="text-muted">
+                                    누적: ${scenario.total}억tCO₂ | 
+                                    초과: ${scenario.over}억tCO₂
+                                </small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteScenarioFromList(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                scenarioList.style.display = 'none';
+            }
+        }
+        
+        // 목록에서 시나리오 삭제
+        function deleteScenarioFromList(index) {
+            savedScenarios.splice(index, 1);
+            updateScenarioList();
+            showAlert('시나리오가 목록에서 제거되었습니다.', 'success');
+        }
+        
+        // 초기화
+        function resetScenario() {
+            budgetInput.value = 87.4;
+            targetYearSlider.value = 2050;
+            r35Slider.value = 50;
+            r40Slider.value = 70;
+            r45Slider.value = 85;
+            
+            updateTargetYearValue();
+            updateR35Value();
+            updateR40Value();
+            updateR45Value();
+            
+            statsCards.style.display = 'none';
+            document.getElementById('chart').innerHTML = '';
+            tableBody.innerHTML = '';
+            currentScenario = null;
+            
+            showAlert('설정이 초기화되었습니다.', 'success');
+        }
+        
+        // 2030년 이전 값 토글
+        function togglePre2030() {
+            showPre2030 = !showPre2030;
+            if (currentScenario) {
+                updateTable(currentScenario.all_data);
+            }
+        }
+        
+        // 로딩 표시
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+        }
+        
+        // 알림 표시
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-custom alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertContainer.appendChild(alertDiv);
+            
+            // 5초 후 자동 제거
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTargetYearValue();
+            updateR35Value();
+            updateR40Value();
+            updateR45Value();
+        });
+    </script>
+</body>
+</html> 
