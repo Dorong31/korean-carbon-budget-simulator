@@ -418,6 +418,32 @@
             margin: 0;
         }
         
+        .footer-links {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+        
+        .version-info {
+            color: white;
+        }
+        
+        .separator {
+            margin: 0 8px;
+            opacity: 0.5;
+        }
+        
+        .instagram-link {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .instagram-link:hover {
+            opacity: 0.8;
+            color: white;
+        }
+        
         @media (max-width: 768px) {
             .footer-content {
                 flex-direction: column;
@@ -436,6 +462,10 @@
             .copyright {
                 font-size: 0.8rem;
             }
+            
+            .footer-links {
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -445,9 +475,6 @@
         <div class="header">
             <h1><i class="fas fa-leaf me-3"></i>{{ app_name }}</h1>
             <p>2050년 탄소중립 목표 달성을 위한 배출량 감축 시나리오를 시뮬레이션해보세요</p>
-            <div class="version-badge">
-                <span class="badge bg-light text-dark">v{{ version }}</span>
-            </div>
         </div>
         
         <!-- Content -->
@@ -500,9 +527,6 @@
                 </div>
                 
                 <div class="text-center mt-4">
-                    <button class="btn btn-primary-custom btn-custom me-3" onclick="calculateScenario()">
-                        <i class="fas fa-calculator me-2"></i>시나리오 계산
-                    </button>
                     <button class="btn btn-success-custom btn-custom me-3" onclick="showSaveModal()">
                         <i class="fas fa-save me-2"></i>시나리오 저장
                     </button>
@@ -540,7 +564,7 @@
             
             <!-- Chart -->
             <div class="chart-container">
-                <h3 class="mb-4"><i class="fas fa-chart-line me-2"></i>배출량 추이</h3>
+                <h3 class="mb-4"><i class="fas fa-chart-line me-2"></i>한국 탄소중립 경로 시뮬레이터</h3>
                 <div id="chart"></div>
             </div>
             
@@ -582,6 +606,13 @@
                 <div class="footer-info">
                     <p class="organization-name">기후커뮤니티 턴테이블</p>
                     <p class="copyright">© 2025 Climate Community Turntable. All rights reserved.</p>
+                    <div class="footer-links">
+                        <span class="version-info">Version: 2.0</span>
+                        <span class="separator">|</span>
+                        <a href="https://www.instagram.com/turntable4nz?igsh=MTYyb2c1em5kazcxeg==" target="_blank" class="instagram-link">
+                            <i class="fab fa-instagram me-1"></i>@turntable4nz
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -665,10 +696,31 @@
         const scenarioNameInput = document.getElementById('scenarioName');
         
         // 이벤트 리스너 등록
-        targetYearSlider.addEventListener('input', updateTargetYearValue);
-        r35Slider.addEventListener('input', updateR35Value);
-        r40Slider.addEventListener('input', updateR40Value);
-        r45Slider.addEventListener('input', updateR45Value);
+        targetYearSlider.addEventListener('input', function() {
+            updateTargetYearValue();
+            debouncedCalculateScenario();
+        });
+        r35Slider.addEventListener('input', function() {
+            updateR35Value();
+            debouncedCalculateScenario();
+        });
+        r40Slider.addEventListener('input', function() {
+            updateR40Value();
+            debouncedCalculateScenario();
+        });
+        r45Slider.addEventListener('input', function() {
+            updateR45Value();
+            debouncedCalculateScenario();
+        });
+        
+        // 디바운스 함수 (실시간 업데이트 최적화)
+        let calculateTimeout;
+        function debouncedCalculateScenario() {
+            clearTimeout(calculateTimeout);
+            calculateTimeout = setTimeout(() => {
+                calculateScenario();
+            }, 300); // 300ms 지연
+        }
         
         // 값 업데이트 함수들
         function updateTargetYearValue() {
@@ -713,7 +765,6 @@
                 if (response.ok) {
                     currentScenario = result;
                     displayResults(result);
-                    showAlert('시나리오가 성공적으로 계산되었습니다.', 'success');
                 } else {
                     throw new Error('계산 중 오류가 발생했습니다.');
                 }
@@ -995,12 +1046,10 @@
             updateR40Value();
             updateR45Value();
             
-            statsCards.style.display = 'none';
-            document.getElementById('chart').innerHTML = '';
-            tableBody.innerHTML = '';
-            currentScenario = null;
-            
-            showAlert('설정이 초기화되었습니다.', 'success');
+            // 초기화 후 자동으로 시나리오 계산
+            setTimeout(() => {
+                calculateScenario();
+            }, 100);
         }
         
         // 2030년 이전 값 토글
@@ -1041,6 +1090,11 @@
             updateR35Value();
             updateR40Value();
             updateR45Value();
+            
+            // 기본 시나리오 자동 계산
+            setTimeout(() => {
+                calculateScenario();
+            }, 500); // 페이지 로드 후 500ms 지연
         });
     </script>
 </body>
