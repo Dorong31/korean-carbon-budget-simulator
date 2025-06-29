@@ -80,32 +80,6 @@ http://localhost:5000
 - **아이콘**: Font Awesome
 - **폰트**: Google Fonts (Noto Sans KR)
 
-## 파일 구조
-
-```
-NetZero-Simulator/
-├── NetZero-Simulator_v2.0.py    # 메인 애플리케이션
-├── requirements.txt             # Python 의존성
-├── README.md                   # 프로젝트 설명서
-├── templates/
-│   └── index.html              # 메인 HTML 템플릿
-└── saved_scenarios/            # 저장된 시나리오 파일들
-```
-
-## 기존 사이트와의 비교
-
-| 기능 | 기존 사이트 | v2.0 버전 |
-|------|-------------|-----------|
-| 디자인 | 기본적인 HTML/CSS | 현대적인 Bootstrap 디자인 |
-| 반응형 | 제한적 | 완전 반응형 |
-| 차트 | D3.js 기본 차트 | Plotly 인터랙티브 차트 |
-| 사용자 경험 | 기본적인 폼 | 직관적인 슬라이더 + 실시간 피드백 |
-| 시나리오 관리 | 메모리 기반 | 파일 저장 시스템 |
-| 시나리오 이름 | 자동 번호 | 사용자 정의 + 자동 번호 |
-| 시나리오 불러오기 | 없음 | 완전한 복원 기능 |
-| 모바일 지원 | 제한적 | 완전 지원 |
-| 접근성 | 기본적 | 향상된 접근성 |
-
 ## v2.0 주요 기능
 
 ### 1. 시나리오 이름 관리
@@ -125,18 +99,6 @@ NetZero-Simulator/
 - **확인 대화상자**: 삭제 시 확인 절차
 - **로딩 상태**: 데이터 불러오기 중 로딩 표시
 
-## 향후 개선 계획
-
-- [ ] 데이터베이스 연동 (SQLite/PostgreSQL)
-- [ ] 사용자 계정 시스템
-- [ ] 시나리오 공유 기능
-- [ ] PDF 리포트 생성
-- [ ] 더 많은 시나리오 템플릿
-- [ ] 국제 비교 기능
-- [ ] 섹터별 분석 기능
-- [ ] 시나리오 버전 관리
-- [ ] 백업/복원 기능
-
 ## 라이선스
 
 이 프로젝트는 MIT 라이선스 하에 배포됩니다.
@@ -147,6 +109,5 @@ NetZero-Simulator/
 
 ---
 
-**개발**: AI Assistant  
 **버전**: v2.0  
 **기반 사이트**: [https://kcbt25.github.io/K-Carbonbudget/](https://kcbt25.github.io/K-Carbonbudget/) 
