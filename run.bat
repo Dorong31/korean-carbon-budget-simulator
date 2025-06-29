@@ -10,10 +10,11 @@ pip install -r requirements.txt
 echo.
 echo 서버 시작 중...
 echo 브라우저에서 http://localhost:5000 으로 접속하세요.
+echo 관리자 통계: http://localhost:5000/admin
 echo.
 echo 종료하려면 Ctrl+C를 누르세요.
 echo.
 
-python NetZero-Simulator_v2.0.py
+python app.py
 
 pause 
