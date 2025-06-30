@@ -1,6 +1,9 @@
+import os
+# 항상 app.py가 있는 폴더에서 실행되도록 현재 작업 디렉토리 변경
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for
 import json
-import os
 from datetime import datetime, date
 import math
 
@@ -221,7 +224,7 @@ def save_scenario():
         
         if not name:
             # 이름이 없으면 자동 생성
-            name = get_next_scenario_name()
+            name = get_next_scenario_name_util()
         
         # 저장 디렉토리 생성
         os.makedirs('saved_scenarios', exist_ok=True)
@@ -301,35 +304,39 @@ def delete_scenario(filename):
 def get_next_scenario_name():
     """다음 시나리오 이름 생성"""
     try:
-        scenarios = []
-        if os.path.exists('saved_scenarios'):
-            for filename in os.listdir('saved_scenarios'):
-                if filename.endswith('.json'):
-                    filepath = os.path.join('saved_scenarios', filename)
-                    with open(filepath, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                        scenarios.append(data['name'])
-        
-        # "시나리오 N" 형태의 이름 찾기
-        existing_numbers = []
-        for name in scenarios:
-            if name.startswith('시나리오 '):
-                try:
-                    num = int(name.split(' ')[1])
-                    existing_numbers.append(num)
-                except:
-                    pass
-        
-        if existing_numbers:
-            next_num = max(existing_numbers) + 1
-        else:
-            next_num = 1
-        
-        return jsonify({'next_name': f'시나리오 {next_num}'})
-        
+        next_name = get_next_scenario_name_util()
+        return jsonify({'next_name': next_name})
     except Exception as e:
         return jsonify({'next_name': '시나리오 1'})
 
+# --- 유틸 함수 추가 ---
+def get_next_scenario_name_util():
+    scenarios = []
+    if os.path.exists('saved_scenarios'):
+        for filename in os.listdir('saved_scenarios'):
+            if filename.endswith('.json'):
+                filepath = os.path.join('saved_scenarios', filename)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        scenarios.append(data['name'])
+                except Exception as e:
+                    print(f"파일 읽기 오류: {filepath} - {e}")
+    print('현재 시나리오 이름 목록:', scenarios)
+    existing_numbers = []
+    for name in scenarios:
+        if name.startswith('시나리오 '):
+            try:
+                num = int(name.split(' ')[1])
+                existing_numbers.append(num)
+            except:
+                pass
+    if existing_numbers:
+        next_num = max(existing_numbers) + 1
+    else:
+        next_num = 1
+    print('다음 시나리오 번호:', next_num)
+    return f'시나리오 {next_num}'
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(debug=False, host='0.0.0.0', port=port) 
+    app.run(debug=True, host='0.0.0.0', port=5000) 

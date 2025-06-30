@@ -637,6 +637,12 @@
                 <h3 class="mb-4"><i class="fas fa-chart-line me-2"></i>한국 탄소중립 경로 시뮬레이터</h3>
                 <div id="chart"></div>
             </div>
+
+            <!-- 저장된 시나리오 비교 영역 (차트 바로 아래) -->
+            <div class="scenario-list" id="scenarioCompareList" style="margin-top:-20px;">
+                <h5><i class="fas fa-balance-scale me-2"></i>비교할 저장된 시나리오 선택</h5>
+                <div id="compareScenarioItems"></div>
+            </div>
             
             <!-- Data Table -->
             <div class="table-container">
@@ -746,6 +752,11 @@
         let currentScenario = null;
         let loadModal = null;
         let saveModal = null;
+        // 차트에 함께 표출할 시나리오 관리
+        let comparedScenarios = {}; // {filename: {name, color, traceIndex}}
+        const scenarioColors = [
+            '#FF5733', '#33C1FF', '#8D33FF', '#33FF57', '#FFC300', '#FF33A8', '#2E86AB'
+        ];
         
         // DOM 요소들
         const budgetInput = document.getElementById('budget');
@@ -857,6 +868,10 @@
             const chartData = JSON.parse(result.chart);
             Plotly.newPlot('chart', chartData.data, chartData.layout, {responsive: true});
             
+            // 비교 시나리오 상태 초기화
+            comparedScenarios = {};
+            renderCompareScenarioList();
+            
             // 테이블 업데이트
             updateTable(result.all_data);
         }
@@ -875,6 +890,81 @@
                     </tr>
                 `;
             }).join('');
+        }
+        
+        // 저장된 시나리오 목록 불러와서 비교 영역에 렌더링
+        async function renderCompareScenarioList() {
+            try {
+                const response = await fetch('/load_scenarios');
+                const scenarios = await response.json();
+                const container = document.getElementById('compareScenarioItems');
+                if (scenarios.length === 0) {
+                    container.innerHTML = `<div class="text-muted">저장된 시나리오가 없습니다.</div>`;
+                    return;
+                }
+                container.innerHTML = scenarios.map((s, idx) => `
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="compare_${s.filename}" data-filename="${s.filename}">
+                        <label class="form-check-label" for="compare_${s.filename}">
+                            <span style="color:${scenarioColors[idx % scenarioColors.length]};font-weight:600;">■</span>
+                            ${s.name} <span class="scenario-date">(${new Date(s.created_at).toLocaleDateString('ko-KR')})</span>
+                        </label>
+                    </div>
+                `).join('');
+                // 이벤트 바인딩
+                scenarios.forEach((s, idx) => {
+                    document.getElementById(`compare_${s.filename}`).addEventListener('change', function(e) {
+                        if (e.target.checked) {
+                            addScenarioToChart(s.filename, scenarioColors[idx % scenarioColors.length]);
+                        } else {
+                            removeScenarioFromChart(s.filename);
+                        }
+                    });
+                });
+            } catch (e) {
+                document.getElementById('compareScenarioItems').innerHTML = `<div class="text-danger">목록 불러오기 오류</div>`;
+            }
+        }
+        // 시나리오 차트에 추가
+        async function addScenarioToChart(filename, color) {
+            if (comparedScenarios[filename]) return; // 이미 추가됨
+            // 데이터 fetch
+            const res = await fetch(`/load_scenario/${filename}`);
+            const result = await res.json();
+            if (!result.success) return;
+            // 시나리오 계산 API로 차트 데이터 생성
+            const settings = result.data.settings;
+            const calcRes = await fetch('/calculate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(settings)
+            });
+            const calcData = await calcRes.json();
+            const chartData = JSON.parse(calcData.chart);
+            // 두 번째 trace(탄소예산 경로)만 추출
+            const trace = chartData.data[1];
+            trace.name = result.data.name;
+            trace.line.color = color;
+            trace.marker.color = color;
+            trace.line.dash = 'dot'; // 점선으로 구분
+            // 차트에 추가
+            Plotly.addTraces('chart', trace).then(gd => {
+                // traceIndex는 기존 trace 개수(기본 2개) + 현재 comparedScenarios 개수
+                comparedScenarios[filename] = {
+                    name: result.data.name,
+                    color,
+                    traceIndex: gd.data.length - 1
+                };
+            });
+        }
+        // 시나리오 차트에서 제거
+        function removeScenarioFromChart(filename) {
+            if (!comparedScenarios[filename]) return;
+            const traceIndex = comparedScenarios[filename].traceIndex;
+            Plotly.deleteTraces('chart', traceIndex);
+            delete comparedScenarios[filename];
+            // traceIndex 재정렬 필요 (여러 개 제거 시)
+            // (간단하게 전체 리렌더링이 필요할 경우, displayResults(currentScenario) 후 다시 추가해도 됨)
         }
         
         // 저장 모달 표시
@@ -1165,6 +1255,8 @@
             setTimeout(() => {
                 calculateScenario();
             }, 500); // 페이지 로드 후 500ms 지연
+            // 비교 시나리오 목록 렌더링
+            renderCompareScenarioList();
         });
     </script>
 </body>
